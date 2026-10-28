@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SocialMind — IBM Granite AI</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #f0f4f8;
+      --surface:   #ffffff;
+      --card:      #f7fafc;
+      --border:    #d1dbe8;
+      --primary:   #0f62fe;
+      --primary-d: #0043ce;
+      --success:   #24a148;
+      --warn:      #f1c21b;
+      --danger:    #da1e28;
+      --purple:    #6929c4;
+      --teal:      #007d79;
+      --text:      #161616;
+      --muted:     #525252;
+      --radius:    12px;
+      --shadow:    0 4px 24px rgba(0,0,0,.10);
+    }
+    body { font-family: 'IBM Plex Sans','Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg,#0f62fe 0%,#0043ce 50%,#6929c4 100%);
+      color:#fff; padding:0 2rem; display:flex; align-items:center;
+      justify-content:space-between; height:64px;
+      box-shadow:0 2px 12px rgba(0,0,0,.18); position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:.75rem; }
+    .logo-icon { font-size:1.8rem; }
+    .logo h1 { font-size:1.25rem; font-weight:700; letter-spacing:-.5px; }
+    .logo span { font-size:.75rem; opacity:.8; display:block; margin-top:-2px; }
+    .ibm-badge {
+      background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3);
+      border-radius:20px; padding:.25rem .8rem; font-size:.72rem; font-weight:600; letter-spacing:.5px;
+    }
+
+    /* ── Layout ── */
+    .container { max-width:1200px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display:flex; gap:.5rem; background:var(--surface); border-radius:var(--radius);
+      padding:.4rem; box-shadow:var(--shadow); margin-bottom:2rem; overflow-x:auto;
+    }
+    .tab-btn {
+      flex:1; min-width:130px; padding:.65rem 1rem; border:none; background:transparent;
+      border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; color:var(--muted);
+      transition:all .2s; white-space:nowrap;
+    }
+    .tab-btn.active { background:var(--primary); color:#fff; box-shadow:0 2px 8px rgba(15,98,254,.35); }
+    .tab-btn:hover:not(.active) { background:var(--card); color:var(--text); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── Cards ── */
+    .card { background:var(--surface); border-radius:var(--radius); padding:2rem; box-shadow:var(--shadow); margin-bottom:1.5rem; }
+    .card h2 { font-size:1.2rem; font-weight:700; margin-bottom:1.25rem; display:flex; align-items:center; gap:.5rem; }
+
+    /* ── Forms ── */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:640px){ .form-grid { grid-template-columns:1fr; } }
+    .form-group { display:flex; flex-direction:column; gap:.35rem; }
+    .form-group.full { grid-column:1/-1; }
+    label { font-size:.85rem; font-weight:600; color:var(--muted); }
+    input,select,textarea {
+      padding:.65rem .85rem; border:1.5px solid var(--border); border-radius:8px;
+      font-size:.9rem; font-family:inherit; transition:border .2s; outline:none; background:#fff;
+    }
+    input:focus,select:focus,textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,98,254,.12); }
+    textarea { resize:vertical; min-height:80px; }
+
+    /* ── Platform Checkboxes ── */
+    .platform-grid { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.4rem; }
+    .platform-chip {
+      display:flex; align-items:center; gap:.4rem;
+      padding:.4rem .85rem; border:1.5px solid var(--border); border-radius:20px;
+      cursor:pointer; font-size:.82rem; font-weight:600; transition:all .2s; user-select:none;
+    }
+    .platform-chip.selected { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .platform-chip input { display:none; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding:.7rem 1.5rem; border:none; border-radius:8px; font-size:.9rem;
+      font-weight:700; cursor:pointer; transition:all .2s; display:inline-flex;
+      align-items:center; gap:.5rem;
+    }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-d); transform:translateY(-1px); box-shadow:0 4px 12px rgba(15,98,254,.3); }
+    .btn-success { background:var(--success); color:#fff; }
+    .btn-success:hover { background:#198038; }
+    .btn-danger  { background:var(--danger); color:#fff; }
+    .btn-danger:hover  { background:#b01212; }
+    .btn-outline { background:transparent; border:1.5px solid var(--primary); color:var(--primary); }
+    .btn-outline:hover { background:var(--primary); color:#fff; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+
+    /* ── Loading Spinner ── */
+    .spinner {
+      width:22px; height:22px; border:3px solid rgba(255,255,255,.35);
+      border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Result Box ── */
+    .result-box {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      padding:1.5rem; margin-top:1.25rem; white-space:pre-wrap;
+      font-size:.9rem; line-height:1.75; max-height:520px; overflow-y:auto;
+      display:none;
+    }
+    .result-box.visible { display:block; }
+    .result-box h3,h4 { color:var(--primary); margin:.5rem 0 .25rem; }
+
+    /* ── Alert ── */
+    .alert { padding:.85rem 1.1rem; border-radius:8px; margin-bottom:1rem; font-size:.88rem; display:none; }
+    .alert.visible { display:block; }
+    .alert-error   { background:#fff1f1; border:1px solid #da1e28; color:#da1e28; }
+    .alert-success { background:#defbe6; border:1px solid #24a148; color:#0e6027; }
+    .alert-warn    { background:#fdf6dd; border:1px solid #f1c21b; color:#7d5a00; }
+
+    /* ── Analytics Dashboard ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      padding:1.25rem 1rem; text-align:center;
+    }
+    .stat-card .stat-val { font-size:1.5rem; font-weight:800; color:var(--primary); }
+    .stat-card .stat-lbl { font-size:.78rem; color:var(--muted); margin-top:.25rem; }
+    .stat-card .stat-note { font-size:.7rem; color:var(--warn); margin-top:.2rem; }
+
+    /* ── Chart Canvas ── */
+    .chart-wrap { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1.25rem; margin-bottom:1.25rem; }
+    .chart-wrap h3 { font-size:1rem; font-weight:700; margin-bottom:1rem; color:var(--muted); }
+    canvas { width:100% !important; max-height:260px; }
+
+    /* ── Sentiment Bar ── */
+    .sentiment-bar { display:flex; height:28px; border-radius:14px; overflow:hidden; margin:.75rem 0; }
+    .sent-pos { background:var(--success); display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#fff; font-weight:700; }
+    .sent-neu { background:var(--warn); display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#333; font-weight:700; }
+    .sent-neg { background:var(--danger); display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#fff; font-weight:700; }
+
+    /* ── Content Types Table ── */
+    .tbl { width:100%; border-collapse:collapse; font-size:.87rem; }
+    .tbl th { background:var(--primary); color:#fff; padding:.6rem .9rem; text-align:left; }
+    .tbl td { padding:.6rem .9rem; border-bottom:1px solid var(--border); }
+    .tbl tr:nth-child(even) td { background:var(--card); }
+
+    /* ── Chatbot ── */
+    .chat-window {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      height:380px; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.75rem;
+    }
+    .msg { max-width:78%; padding:.75rem 1rem; border-radius:12px; font-size:.88rem; line-height:1.6; }
+    .msg-user { background:var(--primary); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+    .msg-bot  { background:#fff; border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:4px; }
+    .chat-input-row { display:flex; gap:.75rem; margin-top:.75rem; }
+    .chat-input-row input { flex:1; }
+
+    /* ── Approval Queue ── */
+    .approval-item {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      padding:1rem 1.25rem; margin-bottom:.85rem;
+    }
+    .approval-item .approval-meta { font-size:.78rem; color:var(--muted); margin-bottom:.4rem; }
+    .approval-item .approval-preview { font-size:.85rem; color:var(--text); margin-bottom:.75rem; white-space:pre-wrap; }
+    .approval-item .approval-actions { display:flex; gap:.75rem; }
+    .badge {
+      display:inline-block; padding:.2rem .65rem; border-radius:20px; font-size:.72rem; font-weight:700;
+    }
+    .badge-pending  { background:#fff3cd; color:#7d5a00; border:1px solid #f1c21b; }
+    .badge-approved { background:#defbe6; color:#0e6027; border:1px solid #24a148; }
+    .badge-rejected { background:#fff1f1; color:#da1e28; border:1px solid #da1e28; }
+
+    /* ── Optimize / Caption ── */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    @media(max-width:700px){ .two-col { grid-template-columns:1fr; } }
+
+    /* ── Footer ── */
+    footer {
+      text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted);
+      border-top:1px solid var(--border); margin-top:2rem;
+    }
+
+    /* ── Disclaimer Banner ── */
+    .disclaimer {
+      background:#fdf6dd; border:1px solid #f1c21b; border-radius:8px;
+      padding:.7rem 1rem; font-size:.8rem; color:#7d5a00; margin-bottom:1.5rem;
+      display:flex; gap:.5rem; align-items:flex-start;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <span class="logo-icon">📱</span>
+    <div>
+      <h1>SocialMind AI</h1>
+      <span>Social Media Agentic AI — IBM Granite LLM</span>
+    </div>
+  </div>
+  <span class="ibm-badge">IBM watsonx.ai</span>
+</header>
+
+<div class="container">
+
+  <!-- ── Disclaimer ── -->
+  <div class="disclaimer">
+    ⚠️ <span><strong>AI Ethics Notice:</strong> All AI-generated content, metrics, and predictions are for informational and creative assistance only. Human approval is required before publishing. All analytics are AI-estimated simulations — not real-time platform data.</span>
+  </div>
+
+  <!-- ── Tabs ── -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('generate')">✨ Generate Content</button>
+    <button class="tab-btn" onclick="switchTab('trends')">📈 Trend Analysis</button>
+    <button class="tab-btn" onclick="switchTab('analytics')">📊 Analytics</button>
+    <button class="tab-btn" onclick="switchTab('optimize')">⚡ Optimizer</button>
+    <button class="tab-btn" onclick="switchTab('chatbot')">💬 AI Chatbot</button>
+    <button class="tab-btn" onclick="switchTab('approvals')">✅ Approvals</button>
+    <button class="tab-btn" onclick="switchTab('about')">ℹ️ About</button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 1 — Generate Content
+  ════════════════════════════════════════ -->
+  <div id="tab-generate" class="tab-panel active">
+    <div class="card">
+      <h2>✨ Generate Social Media Content Package</h2>
+      <div id="gen-alert" class="alert"></div>
+      <form id="gen-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Brand Name *</label>
+            <input type="text" id="brand_name" placeholder="e.g. Nexora Tech" required />
+          </div>
+          <div class="form-group">
+            <label>Industry *</label>
+            <select id="industry">
+              <option>Technology</option><option>Fashion & Beauty</option>
+              <option>Food & Beverage</option><option>Health & Wellness</option>
+              <option>Finance</option><option>Education</option>
+              <option>Travel & Hospitality</option><option>E-Commerce</option>
+              <option>Entertainment</option><option>Non-Profit</option>
+              <option>Real Estate</option><option>Automotive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Audience *</label>
+            <input type="text" id="audience" placeholder="e.g. Millennials, B2B professionals 25-45" required />
+          </div>
+          <div class="form-group">
+            <label>Brand Tone *</label>
+            <select id="tone">
+              <option>Professional</option><option>Friendly & Casual</option>
+              <option>Inspirational</option><option>Humorous</option>
+              <option>Educational</option><option>Bold & Edgy</option>
+              <option>Empathetic</option><option>Luxurious</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Campaign Goals *</label>
+            <select id="goals">
+              <option>Brand Awareness</option><option>Lead Generation</option>
+              <option>Product Launch</option><option>Community Building</option>
+              <option>Sales & Conversions</option><option>Customer Retention</option>
+              <option>Event Promotion</option><option>Thought Leadership</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Campaign Theme</label>
+            <input type="text" id="campaign" placeholder="e.g. Summer Sale, World Environment Day" />
+          </div>
+          <div class="form-group full">
+            <label>Competitor Brand(s)</label>
+            <input type="text" id="competitor" placeholder="e.g. CompetitorA, CompetitorB (optional)" />
+          </div>
+          <div class="form-group full">
+            <label>Target Platforms *</label>
+            <div class="platform-grid" id="platform-grid">
+              <label class="platform-chip selected" onclick="togglePlatform(this)">
+                <input type="checkbox" value="Instagram" checked> 📸 Instagram
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="Twitter/X"> 🐦 Twitter/X
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="LinkedIn"> 💼 LinkedIn
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="Facebook"> 👥 Facebook
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="TikTok"> 🎵 TikTok
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="YouTube"> ▶️ YouTube
+              </label>
+              <label class="platform-chip" onclick="togglePlatform(this)">
+                <input type="checkbox" value="Pinterest"> 📌 Pinterest
+              </label>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
+          <button type="submit" class="btn btn-primary" id="gen-btn">
+            <span>🚀 Generate Content Package</span>
+          </button>
+          <button type="button" class="btn btn-outline" onclick="resetGenForm()">↺ Reset</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" id="gen-result-card" style="display:none">
+      <h2>📦 Generated Content Package</h2>
+      <div id="approval-notice" class="alert alert-warn visible">
+        ⏳ <strong>Pending Human Approval.</strong> Review the content below before publishing.
+        Approval ID: <strong id="approval-id-display">—</strong>
+      </div>
+      <div id="gen-result" class="result-box visible"></div>
+      <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="approveContent()">✅ Approve & Mark Ready</button>
+        <button class="btn btn-danger"  onclick="rejectContent()">❌ Reject</button>
+        <button class="btn btn-outline" onclick="copyResult()">📋 Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 2 — Trend Analysis
+  ════════════════════════════════════════ -->
+  <div id="tab-trends" class="tab-panel">
+    <div class="card">
+      <h2>📈 Social Media Trend Analysis</h2>
+      <div id="trend-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Industry</label>
+          <select id="trend-industry">
+            <option>Technology</option><option>Fashion & Beauty</option>
+            <option>Food & Beverage</option><option>Health & Wellness</option>
+            <option>Finance</option><option>Education</option>
+            <option>Travel & Hospitality</option><option>E-Commerce</option>
+            <option>Entertainment</option><option>Non-Profit</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Platforms to Analyze</label>
+          <select id="trend-platforms" multiple style="height:100px;">
+            <option selected>Instagram</option>
+            <option selected>Twitter/X</option>
+            <option selected>LinkedIn</option>
+            <option>Facebook</option>
+            <option>TikTok</option>
+          </select>
+          <small style="color:var(--muted);font-size:.75rem;">Hold Ctrl/Cmd to select multiple</small>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="analyzeTrends()" style="margin-top:1rem" id="trend-btn">
+        <span>🔍 Analyze Trends</span>
+      </button>
+      <div id="trend-result" class="result-box"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 3 — Analytics Dashboard
+  ════════════════════════════════════════ -->
+  <div id="tab-analytics" class="tab-panel">
+    <div class="card">
+      <h2>📊 Analytics Dashboard</h2>
+      <div id="analytics-alert" class="alert"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Brand Name</label>
+          <input type="text" id="dash-brand" placeholder="Enter brand name" />
+        </div>
+        <div class="form-group">
+          <label>Platforms</label>
+          <select id="dash-platforms" multiple style="height:90px;">
+            <option selected>Instagram</option>
+            <option selected>Twitter/X</option>
+            <option selected>LinkedIn</option>
+            <option>Facebook</option>
+            <option>TikTok</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="loadDashboard()" style="margin-top:1rem" id="dash-btn">
+        <span>📊 Load Dashboard</span>
+      </button>
+    </div>
+
+    <div id="dashboard-content" style="display:none">
+      <div id="analytics-disclaimer" class="disclaimer">
+        ⚠️ <span><strong>All metrics below are AI-estimated simulations</strong> — not real-time platform data. Clearly labelled [AI ESTIMATE] throughout.</span>
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="two-col">
+        <div class="chart-wrap">
+          <h3>📅 Weekly Engagement (AI Estimate)</h3>
+          <canvas id="engagement-chart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>💬 Audience Sentiment (AI Estimate)</h3>
+          <canvas id="sentiment-chart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2>🏆 Content Type Performance [AI ESTIMATES]</h2>
+        <table class="tbl">
+          <thead><tr><th>Content Type</th><th>Avg Engagement Rate</th><th>Note</th></tr></thead>
+          <tbody id="content-types-tbody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>⏰ Best Posting Times [AI ESTIMATES]</h2>
+        <div id="best-times-grid" class="stats-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 4 — Optimizer & Captions
+  ════════════════════════════════════════ -->
+  <div id="tab-optimize" class="tab-panel">
+    <div class="two-col">
+      <!-- Post Optimizer -->
+      <div class="card">
+        <h2>⚡ Post Optimizer</h2>
+        <div id="opt-alert" class="alert"></div>
+        <div class="form-group" style="margin-bottom:.85rem">
+          <label>Original Post</label>
+          <textarea id="opt-post" placeholder="Paste your existing post here..." style="min-height:110px;"></textarea>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Platform</label>
+            <select id="opt-platform">
+              <option>Instagram</option><option>Twitter/X</option>
+              <option>LinkedIn</option><option>Facebook</option>
+              <option>TikTok</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Brand Tone</label>
+            <select id="opt-tone">
+              <option>Professional</option><option>Friendly & Casual</option>
+              <option>Inspirational</option><option>Humorous</option>
+              <option>Educational</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="optimizePost()" style="margin-top:1rem" id="opt-btn">
+          <span>⚡ Optimize Post</span>
+        </button>
+        <div id="opt-result" class="result-box"></div>
+      </div>
+
+      <!-- Image Caption Generator -->
+      <div class="card">
+        <h2>🖼️ Caption from Image</h2>
+        <div id="cap-alert" class="alert"></div>
+        <div class="form-group" style="margin-bottom:.85rem">
+          <label>Describe the Image</label>
+          <textarea id="cap-desc" placeholder="e.g. A woman smiling while holding a coffee cup in a cozy café setting during autumn..." style="min-height:110px;"></textarea>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input type="text" id="cap-brand" placeholder="e.g. BrewCo" />
+          </div>
+          <div class="form-group">
+            <label>Brand Tone</label>
+            <select id="cap-tone">
+              <option>Friendly & Casual</option><option>Professional</option>
+              <option>Inspirational</option><option>Humorous</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="generateCaptions()" style="margin-top:1rem" id="cap-btn">
+          <span>✍️ Generate Captions</span>
+        </button>
+        <div id="cap-result" class="result-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 5 — AI Chatbot
+  ════════════════════════════════════════ -->
+  <div id="tab-chatbot" class="tab-panel">
+    <div class="card">
+      <h2>💬 SocialMind AI Chatbot</h2>
+      <p style="color:var(--muted);font-size:.87rem;margin-bottom:1rem;">Ask anything about social media strategy, content, trends, or platform best practices.</p>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="form-group">
+          <label>Your Brand (optional)</label>
+          <input type="text" id="chat-brand" placeholder="e.g. Nexora Tech" />
+        </div>
+        <div class="form-group">
+          <label>Industry (optional)</label>
+          <select id="chat-industry">
+            <option value="">— Select —</option>
+            <option>Technology</option><option>Fashion & Beauty</option>
+            <option>Food & Beverage</option><option>Health & Wellness</option>
+            <option>Finance</option><option>Education</option>
+          </select>
+        </div>
+      </div>
+      <div class="chat-window" id="chat-window">
+        <div class="msg msg-bot">👋 Hi! I'm <strong>SocialMind AI</strong>, your social media strategy assistant powered by IBM Granite.<br><br>Ask me anything — from content ideas and hashtag strategies to platform algorithms and engagement tips! 🚀</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Ask a social media question..." onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="btn btn-primary" onclick="sendChat()" id="chat-btn"><span>Send ➤</span></button>
+      </div>
+      <div style="margin-top:.75rem; display:flex; flex-wrap:wrap; gap:.5rem;">
+        <button class="btn btn-outline" style="font-size:.78rem; padding:.4rem .85rem;" onclick="quickChat('What are the best posting times for Instagram in 2024?')">⏰ Best Posting Times</button>
+        <button class="btn btn-outline" style="font-size:.78rem; padding:.4rem .85rem;" onclick="quickChat('How do I grow my LinkedIn followers organically?')">📈 LinkedIn Growth</button>
+        <button class="btn btn-outline" style="font-size:.78rem; padding:.4rem .85rem;" onclick="quickChat('Give me 5 viral content ideas for TikTok')">🎵 TikTok Ideas</button>
+        <button class="btn btn-outline" style="font-size:.78rem; padding:.4rem .85rem;" onclick="quickChat('How do hashtags affect Instagram reach?')">🏷️ Hashtag Strategy</button>
+        <button class="btn btn-outline" style="font-size:.78rem; padding:.4rem .85rem;" onclick="quickChat('What is the ideal content mix for a brand on social media?')">🎨 Content Mix</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 6 — Approval Queue
+  ════════════════════════════════════════ -->
+  <div id="tab-approvals" class="tab-panel">
+    <div class="card">
+      <h2>✅ Human Approval Queue</h2>
+      <p style="color:var(--muted);font-size:.87rem;margin-bottom:1rem;">
+        Review AI-generated content before publishing. All content requires human approval in line with responsible AI practices.
+      </p>
+      <button class="btn btn-outline" onclick="loadApprovals()" style="margin-bottom:1.25rem">🔄 Refresh Queue</button>
+      <div id="approvals-container">
+        <p style="color:var(--muted); font-size:.9rem; text-align:center; padding:2rem;">No pending items. Generate content first.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 7 — About
+  ════════════════════════════════════════ -->
+  <div id="tab-about" class="tab-panel">
+    <div class="card">
+      <h2>ℹ️ About SocialMind AI</h2>
+      <p style="color:var(--muted);margin-bottom:1.5rem;">A full-stack Agentic AI Social Media application powered by IBM Granite LLM on IBM watsonx.ai.</p>
+      <div class="form-grid">
+        <div class="card" style="background:var(--card); box-shadow:none; border:1px solid var(--border);">
+          <h2 style="font-size:1rem">🤖 AI Model</h2>
+          <p style="font-size:.88rem;color:var(--muted)">IBM Granite 13B Instruct v2<br>Hosted on IBM watsonx.ai (AU Sydney)</p>
+        </div>
+        <div class="card" style="background:var(--card); box-shadow:none; border:1px solid var(--border);">
+          <h2 style="font-size:1rem">🛡️ Ethical AI</h2>
+          <p style="font-size:.88rem;color:var(--muted)">HAM principles: Helpful, Accurate, Mindful<br>Input + Output guardrails active</p>
+        </div>
+        <div class="card" style="background:var(--card); box-shadow:none; border:1px solid var(--border);">
+          <h2 style="font-size:1rem">🔒 Privacy</h2>
+          <p style="font-size:.88rem;color:var(--muted)">No user data stored or logged<br>PII redaction active on all outputs</p>
+        </div>
+        <div class="card" style="background:var(--card); box-shadow:none; border:1px solid var(--border);">
+          <h2 style="font-size:1rem">📊 Analytics</h2>
+          <p style="font-size:.88rem;color:var(--muted)">All metrics are AI-estimated simulations<br>Clearly labelled — not real-time data</p>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem">
+        <h2 style="font-size:1rem; margin-bottom:.75rem">🧰 Tech Stack</h2>
+        <table class="tbl">
+          <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Frontend</td><td>HTML5, CSS3, Vanilla JavaScript</td></tr>
+            <tr><td>Backend</td><td>Python 3.9+, Flask 3.0</td></tr>
+            <tr><td>AI Model</td><td>IBM Granite 13B Instruct v2</td></tr>
+            <tr><td>AI Platform</td><td>IBM watsonx.ai (AP South — au-syd)</td></tr>
+            <tr><td>SDK</td><td>ibm-watsonx-ai</td></tr>
+            <tr><td>Charts</td><td>Chart.js (CDN)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>⚕️ Disclaimer</h2>
+      <p style="font-size:.88rem; color:var(--muted); line-height:1.8;">
+        This application and all AI-generated content are provided for <strong>informational and creative assistance only</strong>.
+        They do NOT constitute professional marketing advice. All engagement metrics and trend predictions are
+        <strong>AI-estimated simulations</strong> and not real-time platform data.
+        <br><br>
+        IBM Corporation, its affiliates, and the application developers assume <strong>no liability</strong>
+        for any business outcomes resulting from use of this application.
+        Always apply human judgment before publishing any AI-generated content.
+      </p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  SocialMind AI &nbsp;|&nbsp; Powered by IBM Granite on watsonx.ai &nbsp;|&nbsp; IBM Future Developer Program &nbsp;|&nbsp; All AI outputs require human review before publishing
+</footer>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ── State ──────────────────────────────────
+let currentApprovalId = null;
+let engagementChartInstance = null;
+let sentimentChartInstance  = null;
+
+// ── Tab Switching ──────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'approvals') loadApprovals();
+}
+
+// ── Platform Toggle ────────────────────────
+function togglePlatform(el) {
+  el.classList.toggle('selected');
+  const cb = el.querySelector('input[type=checkbox]');
+  cb.checked = el.classList.contains('selected');
+}
+
+function getSelectedPlatforms() {
+  return Array.from(document.querySelectorAll('#platform-grid .platform-chip.selected input'))
+    .map(cb => cb.value);
+}
+
+// ── Show / Hide Helpers ────────────────────
+function showAlert(id, msg, type='error') {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type} visible`;
+  el.textContent = msg;
+}
+function hideAlert(id) {
+  document.getElementById(id).className = 'alert';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Processing…';
+  } else {
+    btn.disabled = false;
+  }
+}
+
+// ── Generate Content ───────────────────────
+document.getElementById('gen-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  hideAlert('gen-alert');
+  const platforms = getSelectedPlatforms();
+  if (platforms.length === 0) {
+    showAlert('gen-alert', 'Please select at least one platform.');
+    return;
+  }
+
+  const payload = {
+    brand_name:  document.getElementById('brand_name').value.trim(),
+    industry:    document.getElementById('industry').value,
+    audience:    document.getElementById('audience').value.trim(),
+    platforms:   platforms,
+    tone:        document.getElementById('tone').value,
+    goals:       document.getElementById('goals').value,
+    campaign:    document.getElementById('campaign').value.trim(),
+    competitor:  document.getElementById('competitor').value.trim(),
+  };
+
+  setLoading('gen-btn', true);
+  try {
+    const res  = await fetch('/api/generate-content', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { showAlert('gen-alert', data.error || 'Failed to generate content.'); return; }
+
+    currentApprovalId = data.approval_id;
+    document.getElementById('approval-id-display').textContent = '#' + data.approval_id;
+    document.getElementById('gen-result').textContent = data.content;
+    document.getElementById('gen-result-card').style.display = 'block';
+    document.getElementById('gen-result-card').scrollIntoView({ behavior:'smooth' });
+  } catch(err) {
+    showAlert('gen-alert', 'Network error. Please check the server.');
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+    document.getElementById('gen-btn').innerHTML = '<span>🚀 Generate Content Package</span>';
+  }
+});
+
+function resetGenForm() {
+  document.getElementById('gen-form').reset();
+  document.querySelectorAll('.platform-chip').forEach(c => {
+    c.classList.remove('selected');
+    c.querySelector('input').checked = false;
+  });
+  document.querySelector('.platform-chip').classList.add('selected');
+  document.querySelector('.platform-chip input').checked = true;
+  document.getElementById('gen-result-card').style.display = 'none';
+  hideAlert('gen-alert');
+}
+
+function copyResult() {
+  const text = document.getElementById('gen-result').textContent;
+  navigator.clipboard.writeText(text).then(() => alert('Content copied to clipboard!'));
+}
+
+async function approveContent() {
+  if (!currentApprovalId) return;
+  await patchApproval(currentApprovalId, 'approve');
+  showAlert('gen-alert', '✅ Content approved and marked ready for publishing!', 'success');
+}
+
+async function rejectContent() {
+  if (!currentApprovalId) return;
+  await patchApproval(currentApprovalId, 'reject');
+  showAlert('gen-alert', '❌ Content rejected. Please regenerate with updated parameters.', 'warn');
+}
+
+// ── Trend Analysis ─────────────────────────
+async function analyzeTrends() {
+  hideAlert('trend-alert');
+  const industry  = document.getElementById('trend-industry').value;
+  const opts      = document.getElementById('trend-platforms');
+  const platforms = Array.from(opts.selectedOptions).map(o => o.value);
+
+  setLoading('trend-btn', true);
+  try {
+    const res  = await fetch('/api/analyze-trends', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ industry, platforms }) });
+    const data = await res.json();
+    if (!res.ok) { showAlert('trend-alert', data.error || 'Failed to analyze trends.'); return; }
+    const el = document.getElementById('trend-result');
+    el.textContent = data.analysis;
+    el.classList.add('visible');
+  } catch(err) {
+    showAlert('trend-alert', 'Network error. Please check the server.');
+  } finally {
+    document.getElementById('trend-btn').disabled = false;
+    document.getElementById('trend-btn').innerHTML = '<span>🔍 Analyze Trends</span>';
+  }
+}
+
+// ── Analytics Dashboard ────────────────────
+async function loadDashboard() {
+  hideAlert('analytics-alert');
+  const brand     = document.getElementById('dash-brand').value.trim() || 'Your Brand';
+  const opts      = document.getElementById('dash-platforms');
+  const platforms = Array.from(opts.selectedOptions).map(o => o.value);
+
+  setLoading('dash-btn', true);
+  try {
+    const res  = await fetch('/api/analytics/dashboard', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ brand_name:brand, platforms }) });
+    const data = await res.json();
+    if (!res.ok) { showAlert('analytics-alert', 'Failed to load dashboard.'); return; }
+    renderDashboard(data);
+    document.getElementById('dashboard-content').style.display = 'block';
+    document.getElementById('dashboard-content').scrollIntoView({ behavior:'smooth' });
+  } catch(err) {
+    showAlert('analytics-alert', 'Network error. Please check the server.');
+  } finally {
+    document.getElementById('dash-btn').disabled = false;
+    document.getElementById('dash-btn').innerHTML = '<span>📊 Load Dashboard</span>';
+  }
+}
+
+function renderDashboard(data) {
+  const ov = data.overview;
+  const statsEl = document.getElementById('stats-grid');
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-val">${ov.total_reach.split(' ')[0]}</div><div class="stat-lbl">Total Reach</div><div class="stat-note">[AI ESTIMATE]</div></div>
+    <div class="stat-card"><div class="stat-val">${ov.total_impressions.split(' ')[0]}</div><div class="stat-lbl">Impressions</div><div class="stat-note">[AI ESTIMATE]</div></div>
+    <div class="stat-card"><div class="stat-val">${ov.avg_engagement_rate.split(' ')[0]}</div><div class="stat-lbl">Avg Engagement</div><div class="stat-note">[AI ESTIMATE]</div></div>
+    <div class="stat-card"><div class="stat-val">${ov.follower_growth.split(' ')[0]}</div><div class="stat-lbl">Follower Growth</div><div class="stat-note">[AI ESTIMATE]</div></div>
+    <div class="stat-card"><div class="stat-val">🏆</div><div class="stat-lbl">Top Platform</div><div class="stat-note">${ov.top_platform}</div></div>
+  `;
+
+  // Engagement Chart
+  const engCtx = document.getElementById('engagement-chart').getContext('2d');
+  if (engagementChartInstance) engagementChartInstance.destroy();
+  const colors = ['#0f62fe','#6929c4','#007d79','#24a148','#f1c21b'];
+  engagementChartInstance = new Chart(engCtx, {
+    type: 'line',
+    data: {
+      labels: data.weekly_engagement.labels,
+      datasets: data.weekly_engagement.datasets.map((d, i) => ({
+        label: d.platform, data: d.data,
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length] + '22',
+        tension: 0.4, fill: true
+      }))
+    },
+    options: { responsive:true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } }
+  });
+
+  // Sentiment Chart
+  const sentCtx = document.getElementById('sentiment-chart').getContext('2d');
+  if (sentimentChartInstance) sentimentChartInstance.destroy();
+  sentimentChartInstance = new Chart(sentCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Positive','Neutral','Negative'],
+      datasets: [{ data: [data.sentiment.positive, data.sentiment.neutral, data.sentiment.negative], backgroundColor: ['#24a148','#f1c21b','#da1e28'] }]
+    },
+    options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
+  });
+
+  // Content types table
+  const tbody = document.getElementById('content-types-tbody');
+  tbody.innerHTML = data.top_content_types.map(ct =>
+    `<tr><td>${ct.type}</td><td>${ct.engagement}</td><td style="color:var(--warn);font-size:.78rem">${ct.note}</td></tr>`
+  ).join('');
+
+  // Best times
+  const timesEl = document.getElementById('best-times-grid');
+  timesEl.innerHTML = Object.entries(data.best_posting_times).map(([plat, time]) =>
+    `<div class="stat-card"><div class="stat-val" style="font-size:1rem">${plat}</div><div class="stat-lbl">${time}</div></div>`
+  ).join('');
+}
+
+// ── Post Optimizer ─────────────────────────
+async function optimizePost() {
+  hideAlert('opt-alert');
+  const post     = document.getElementById('opt-post').value.trim();
+  const platform = document.getElementById('opt-platform').value;
+  const tone     = document.getElementById('opt-tone').value;
+
+  if (!post) { showAlert('opt-alert', 'Please enter a post to optimize.'); return; }
+
+  setLoading('opt-btn', true);
+  try {
+    const res  = await fetch('/api/optimize-post', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ post, platform, tone }) });
+    const data = await res.json();
+    if (!res.ok) { showAlert('opt-alert', data.error || 'Failed to optimize post.'); return; }
+    const el = document.getElementById('opt-result');
+    el.textContent = data.optimized_post;
+    el.classList.add('visible');
+  } catch(err) {
+    showAlert('opt-alert', 'Network error. Please check the server.');
+  } finally {
+    document.getElementById('opt-btn').disabled = false;
+    document.getElementById('opt-btn').innerHTML = '<span>⚡ Optimize Post</span>';
+  }
+}
+
+// ── Caption Generator ──────────────────────
+async function generateCaptions() {
+  hideAlert('cap-alert');
+  const description = document.getElementById('cap-desc').value.trim();
+  const brand_name  = document.getElementById('cap-brand').value.trim();
+  const tone        = document.getElementById('cap-tone').value;
+
+  if (!description) { showAlert('cap-alert', 'Please describe the image.'); return; }
+
+  setLoading('cap-btn', true);
+  try {
+    const res  = await fetch('/api/caption-from-image', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ description, brand:{ brand_name, tone } }) });
+    const data = await res.json();
+    if (!res.ok) { showAlert('cap-alert', data.error || 'Failed to generate captions.'); return; }
+    const el = document.getElementById('cap-result');
+    el.textContent = data.captions;
+    el.classList.add('visible');
+  } catch(err) {
+    showAlert('cap-alert', 'Network error. Please check the server.');
+  } finally {
+    document.getElementById('cap-btn').disabled = false;
+    document.getElementById('cap-btn').innerHTML = '<span>✍️ Generate Captions</span>';
+  }
+}
+
+// ── Chatbot ────────────────────────────────
+async function sendChat() {
+  const input   = document.getElementById('chat-input');
+  const query   = input.value.trim();
+  if (!query) return;
+
+  appendMsg(query, 'user');
+  input.value = '';
+
+  const context = {
+    brand_name: document.getElementById('chat-brand').value.trim(),
+    industry:   document.getElementById('chat-industry').value
+  };
+
+  const btn = document.getElementById('chat-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const res  = await fetch('/api/chatbot', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ query, context }) });
+    const data = await res.json();
+    appendMsg(data.answer || data.error || 'Sorry, something went wrong.', 'bot');
+  } catch(err) {
+    appendMsg('⚠️ Network error. Please check the server.', 'bot');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<span>Send ➤</span>';
+  }
+}
+
+function quickChat(q) {
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+function appendMsg(text, role) {
+  const win = document.getElementById('chat-window');
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  div.textContent = text;
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+// ── Approval Queue ─────────────────────────
+async function loadApprovals() {
+  const container = document.getElementById('approvals-container');
+  container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:1rem">Loading…</p>';
+  try {
+    const res  = await fetch('/api/approvals');
+    const data = await res.json();
+    if (!data.approvals || data.approvals.length === 0) {
+      container.innerHTML = '<p style="color:var(--muted); font-size:.9rem; text-align:center; padding:2rem;">No items in the approval queue. Generate content first.</p>';
+      return;
+    }
+    container.innerHTML = data.approvals.map(item => `
+      <div class="approval-item" id="approval-${item.id}">
+        <div class="approval-meta">
+          <strong>#${item.id}</strong> — ${item.brand} &nbsp;|&nbsp; ${item.timestamp.replace('T',' ').replace('Z','')} UTC
+          &nbsp;<span class="badge badge-${item.status}">${item.status.toUpperCase()}</span>
+        </div>
+        <div class="approval-preview">${item.content}</div>
+        ${item.status === 'pending' ? `
+        <div class="approval-actions">
+          <button class="btn btn-success" onclick="handleApproval(${item.id},'approve')">✅ Approve</button>
+          <button class="btn btn-danger"  onclick="handleApproval(${item.id},'reject')">❌ Reject</button>
+        </div>` : `<p style="font-size:.82rem;color:var(--muted)">Reviewed at ${item.reviewed ? item.reviewed.replace('T',' ').replace('Z','') + ' UTC' : '—'}</p>`}
+      </div>
+    `).join('');
+  } catch(err) {
+    container.innerHTML = '<p style="color:var(--danger)">Error loading approvals.</p>';
+  }
+}
+
+async function handleApproval(id, action) {
+  await patchApproval(id, action);
+  loadApprovals();
+}
+
+async function patchApproval(id, action) {
+  try {
+    await fetch(`/api/approvals/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action })
+    });
+  } catch(e) { console.error(e); }
+}
+</script>
+</body>
+</html>
